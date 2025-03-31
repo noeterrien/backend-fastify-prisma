@@ -25,11 +25,16 @@ const swaggerUiOptions = {
 };
 
 import helloRoute from "./routes/hello.route.js";
+import booksRoute from "./routes/books.route.js";
+import prismaPlugin from "./plugins/prisma.js";
 
 const registerApp = async (app, opt) => {
   app.register(fastifySwagger, swaggerOptions);
   app.register(fastifySwaggerUi, swaggerUiOptions);
+  app.register(prismaPlugin); 
+
   app.register(helloRoute);
+  app.register(booksRoute, { prefix: "/books" });
 };
 
 export default registerApp;

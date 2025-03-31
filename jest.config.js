@@ -1,3 +1,6 @@
+// 
+process.env.DATABASE_URL = 'file:./test.db';
+
 export default {
   testMatch: ["**/tests/**/*.test.js"],
   collectCoverage: true,
