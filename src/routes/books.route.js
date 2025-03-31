@@ -1,10 +1,20 @@
 async function booksRoute(fastify, options) {
+
     fastify.get('/', async (request, reply) => {
       const books = await fastify.prisma.book.findMany();
       return books;
     });
   
-    fastify.get('/:id', async (request, reply) => {
+    const getBookSchema = {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+        }, 
+      },
+    };
+    
+    fastify.get('/:id', { schema: getBookSchema }, async (request, reply) => {
       const book = await fastify.prisma.book.findUnique({
         where: { id: parseInt(request.params.id) },
       });
@@ -14,7 +24,18 @@ async function booksRoute(fastify, options) {
       return book;
     });
   
-    fastify.post('/', async (request, reply) => {
+    const createBookSchema = {
+      body: {
+        type: 'object',
+        required: ['title', 'author'],
+        properties: {
+          title: { type: 'string' },  
+          author: { type: 'string' },
+        },
+      },
+    };
+
+    fastify.post('/', { schema: createBookSchema }, async (request, reply) => {
       const { title, author } = request.body;
       if (!title || !author) {
         reply.code(400).send({ error: 'Title and author are required' });
@@ -26,7 +47,24 @@ async function booksRoute(fastify, options) {
       reply.code(201).send(book);
     });
   
-    fastify.put('/:id', async (request, reply) => {
+    const updateBookSchema = {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+        },
+      },
+      body: {
+        type: 'object',
+        required: ['title', 'author'],
+        properties: {
+          title: { type: 'string' },
+          author: { type: 'string' },
+        },
+      },
+    };
+
+    fastify.put('/:id', { schema: updateBookSchema }, async (request, reply) => {
       const { title, author } = request.body;
       try {
         const book = await fastify.prisma.book.update({
@@ -38,8 +76,16 @@ async function booksRoute(fastify, options) {
         reply.code(404).send({ error: 'Book not found' });
       }
     });
-  
-    fastify.delete('/:id', async (request, reply) => {
+
+    const deleteBookSchema = {
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer' },
+        },
+      },
+    };  
+    fastify.delete('/:id', { schema: deleteBookSchema }, async (request, reply) => {
       try {
         await fastify.prisma.book.delete({
           where: { id: parseInt(request.params.id) },
