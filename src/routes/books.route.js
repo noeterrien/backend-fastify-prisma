@@ -1,3 +1,4 @@
+let nextId = 0;
 async function booksRoute(fastify, options) {
 
   fastify.get('/', async (request, reply) => {
@@ -15,9 +16,15 @@ async function booksRoute(fastify, options) {
   };
 
   fastify.get('/:id', { schema: getBookSchema }, async (request, reply) => {
-    //  ⚙️🔥 write your code here ⚙️🔥
-    // tips : look about findUnique
-    reply.code(404).send({ error: 'Not implemented' });
+    const { id } = request.params;
+    const book = await fastify.prisma.book.findUnique({
+      where: { id },
+    });
+    if (book == null) {
+      reply.code(404).send({ error: 'Book not found' });
+    } else {
+      reply.code(200).send(book);
+    }
   });
 
   const createBookSchema = {
@@ -32,8 +39,20 @@ async function booksRoute(fastify, options) {
   };
 
   fastify.post('/', { schema: createBookSchema }, async (request, reply) => {
-    //  ⚙️🔥 write your code here ⚙️🔥
-    reply.code(404).send({ error: 'Not implemented' });
+    const { title, author } = request.body;
+    if (title == ""){
+      reply.code(400).send({ error: 'Title is required' });
+      return;
+    }
+    const book = await fastify.prisma.book.create({
+      data: {
+        id:nextId,
+        title,
+        author,
+      },
+    });
+    nextId++;
+    reply.code(201).send(book);
   });
 
   const updateBookSchema = {
@@ -54,8 +73,22 @@ async function booksRoute(fastify, options) {
   };
 
   fastify.put('/:id', { schema: updateBookSchema }, async (request, reply) => {
-    //  ⚙️🔥 write your code here ⚙️🔥
-    reply.code(404).send({ error: 'Not implemented' });
+    const { id } = request.params;
+    const { title, author } = request.body;
+    try {
+      const book = await fastify.prisma.book.update({
+        where: { id:parseInt(id) },
+        data: {
+          title,
+          author,
+        },
+      });
+      reply.code(200).send(book);
+    } catch (error) {
+      if (error.code === 'P2025') {
+        reply.code(404).send({ error: 'Book not found' });
+      }
+    }
   });
 
   const deleteBookSchema = {
@@ -67,8 +100,17 @@ async function booksRoute(fastify, options) {
     },
   };
   fastify.delete('/:id', { schema: deleteBookSchema }, async (request, reply) => {
-    //  ⚙️🔥 write your code here ⚙️🔥
-    reply.code(404).send({ error: 'Not implemented' });
+    const { id } = request.params;
+    try {
+      const book = await fastify.prisma.book.delete({
+        where: { id:parseInt(id) },
+      });
+      reply.code(204).send(book);
+    } catch (error) {
+      if (error.code === 'P2025') {
+        reply.code(404).send({ error: 'Book not found' });
+      }
+    }
   });
 }
 
